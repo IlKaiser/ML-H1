@@ -64,7 +64,7 @@ def add_data_from_graph(x_data):
         i+=1
         score = (i/len(graph_list))*100
         sys.stdout.write("\r")
-        sys.stdout.write("Elaborating Dataset: %0.3f %%"%score)
+        sys.stdout.write("Elaborating Dataset: %0.3f%%"%score)
         sys.stdout.flush()
         ##################
     print()
@@ -78,27 +78,30 @@ def add_data_from_graph(x_data):
     x_data['bitwise']=bitwise
     x_data['calls']=calls
     x_data['jumps']=jumps
-x_data=pd.read_json('./dataset/noduplicatedataset.json',lines=True)
-x_data.head()
-add_data_from_graph(x_data)
-print(x_data.arithmetic)
-feature_cols = ['nodes','complexity','diameter',
-'moves','arithmetic','float_op', 'bitwise','calls','jumps']
-X_all =  x_data.loc[:,feature_cols]
-Y_all =  x_data.semantic
 
-X_train, X_test, y_train, y_test = train_test_split(X_all, Y_all, test_size=0.333, 
-                                                    random_state=42)
 
-clf     = tree.DecisionTreeClassifier()
-model   = clf.fit(X_train,y_train)
-pred    = clf.predict(X_test)
-score   = metrics.accuracy_score(y_test, pred)
-print("accuracy:   %0.3f" % score)
-print("classification report:")
-print(metrics.classification_report(y_test, pred,))
-print("confusion matrix:")
-print(metrics.confusion_matrix(y_test, pred))
+def train_and_test_model(algorithm=tree.DecisionTreeClassifier(),verbose=True):
+    x_data=pd.read_json('./dataset/noduplicatedataset.json',lines=True)
+    x_data.head()
+    add_data_from_graph(x_data)
+    feature_cols = ['nodes','complexity','diameter',
+    'moves','arithmetic','float_op', 'bitwise','calls','jumps']
+    X_all =  x_data.loc[:,feature_cols]
+    Y_all =  x_data.semantic
+
+    X_train, X_test, y_train, y_test = train_test_split(X_all, Y_all, test_size=0.333, 
+                                                        random_state=42)
+
+    clf     = algorithm
+    clf.fit(X_train,y_train)
+    pred    = clf.predict(X_test)
+    score   = metrics.accuracy_score(y_test, pred)
+    if verbose:
+        print("classification report:")
+        print(metrics.classification_report(y_test, pred,))
+        print("confusion matrix:")
+        print(metrics.confusion_matrix(y_test, pred))
+    return clf,score
 
 def evaluate_mystery_set(clf):
     x_data=pd.read_json('./dataset/nodupblindtest.json',lines=True)
@@ -109,4 +112,3 @@ def evaluate_mystery_set(clf):
     X_test =  x_data.loc[:,feature_cols]
     y = clf.predict(X_test)
     return y
-print(evaluate_mystery_set(clf))
