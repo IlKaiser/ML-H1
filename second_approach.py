@@ -21,16 +21,17 @@ import sys
 import re
 
 ## Compute Number of occurrences in asm text
+
 def number_of_occurrences(regex_text,text):
     return len(re.findall(regex_text,text))
 
 
 ## Compute parameters starting from raw data
+
 def add_data_from_graph(x_data):
     graph_list = [json_graph.adjacency_graph(cfg) for cfg in x_data.cfg]
     nodes      = []
     complexity = []
-    #cycles     = []
     diameter   = []
     moves      = []
     arithmetic = []
@@ -46,7 +47,6 @@ def add_data_from_graph(x_data):
 
         nodes.append(N)
         complexity.append(E - N + P)
-        #cycles.append(len(list(nx.simple_cycles(graph))))
         
         if(nx.is_strongly_connected(graph)):
             diameter.append(nx.diameter(graph))
@@ -54,11 +54,11 @@ def add_data_from_graph(x_data):
             diameter.append(0)
         
         moves.append(number_of_occurrences(r"[a-zA-Z0-9]*mov|lea[a-zA-Z0-9]*",str(x_data.lista_asm[i])))
-        arithmetic.append(number_of_occurrences(r"[a-zA-Z0-9]*add|mul[a-zA-Z0-9]*",str(x_data.lista_asm[i])))
+        arithmetic.append(number_of_occurrences(r"[a-zA-Z0-9]*add|mul|sub[a-zA-Z0-9]*",str(x_data.lista_asm[i])))
         float_op.append(number_of_occurrences(r"[a-zA-Z0-9]*xmm[a-zA-Z0-9]*",str(x_data.lista_asm[i])))
         bitwise.append(number_of_occurrences(r"[a-zA-Z0-9]*and|or|xor[a-zA-Z0-9]*",str(x_data.lista_asm[i])))
         calls.append(number_of_occurrences(r"[a-zA-Z0-9]*call[a-zA-Z0-9]*",str(x_data.lista_asm[i])))
-        jumps.append(number_of_occurrences(r"[a-zA-Z0-9]*jmp[a-zA-Z0-9]*",str(x_data.lista_asm[i])))
+        jumps.append(number_of_occurrences(r"[a-zA-Z0-9]*jmp|jne|je|j[a-zA-Z0-9]*",str(x_data.lista_asm[i])))
 
         ### Print Progress
         i+=1
@@ -70,7 +70,6 @@ def add_data_from_graph(x_data):
     print()
     x_data['nodes']=nodes
     x_data['complexity']=complexity
-    #x_data['cycles']=cycles
     x_data['diameter']=diameter
     x_data['moves']=moves
     x_data['arithmetic']=arithmetic
@@ -79,19 +78,19 @@ def add_data_from_graph(x_data):
     x_data['calls']=calls
     x_data['jumps']=jumps
 
+## Train and test model with first approach
 
 def train_and_test_model(algorithm=tree.DecisionTreeClassifier(),verbose=True):
     x_data=pd.read_json('./dataset/noduplicatedataset.json',lines=True)
-    x_data.head()
+    
     add_data_from_graph(x_data)
     feature_cols = ['nodes','complexity','diameter',
     'moves','arithmetic','float_op', 'bitwise','calls','jumps']
     X_all =  x_data.loc[:,feature_cols]
     Y_all =  x_data.semantic
-
-    X_train, X_test, y_train, y_test = train_test_split(X_all, Y_all, test_size=0.333, 
+    X_train, X_test, y_train, y_test = train_test_split(X_all, Y_all, test_size=0.3, 
                                                         random_state=42)
-
+   
     clf     = algorithm
     clf.fit(X_train,y_train)
     pred    = clf.predict(X_test)
@@ -103,9 +102,10 @@ def train_and_test_model(algorithm=tree.DecisionTreeClassifier(),verbose=True):
         print(metrics.confusion_matrix(y_test, pred))
     return clf,score
 
+## Evaluate myster set with the trained model
+
 def evaluate_mystery_set(clf):
-    x_data=pd.read_json('./dataset/nodupblindtest.json',lines=True)
-    x_data.head()
+    x_data=pd.read_json('./dataset/blindtest.json',lines=True)
     add_data_from_graph(x_data)
     feature_cols = ['nodes','complexity','diameter',
     'moves','arithmetic','float_op', 'bitwise','calls','jumps']

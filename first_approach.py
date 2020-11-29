@@ -14,6 +14,7 @@ from sklearn import metrics
 
 import math
 
+## Train and test model with first approach
 
 def train_and_test_model(algorithm=LinearSVC(),verbose=True,vect_type="hash"):
 
@@ -43,7 +44,7 @@ def train_and_test_model(algorithm=LinearSVC(),verbose=True,vect_type="hash"):
     else:
         raise RuntimeError("Supported Vectorizer Types : hash,count,tfid")
 
-    X_train, X_test, y_train, y_test = train_test_split(X_all, Y_all, test_size=0.333, 
+    X_train, X_test, y_train, y_test = train_test_split(X_all, Y_all, test_size=0.3, 
                                                     random_state=42)
     clf     = algorithm
     clf.fit(X_train,y_train)
@@ -57,9 +58,10 @@ def train_and_test_model(algorithm=LinearSVC(),verbose=True,vect_type="hash"):
     return clf,score,vectorizer
 
 
+## Evaluate myster set with the trained model
 
 def evaluate_mystery_set(clf,vect=None):
-    x_data=pd.read_json('./dataset/nodupblindtest.json',lines=True)
+    x_data=pd.read_json('./dataset/blindtest.json',lines=True)
     
     X_test = vect.transform(x_data.loc[:,'lista_asm'])
 
