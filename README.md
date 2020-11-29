@@ -1,1 +1,2 @@
-# ML-H1
+# Machine Learning - Homework #1
+First Machine Learning homework
