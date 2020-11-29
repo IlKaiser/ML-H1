@@ -20,6 +20,8 @@ from time import time
 import matplotlib.pyplot as plt
 import numpy as np
 
+## Return the evental classifying differences between 
+## two result arrays
 
 def compare_lists(l1,l2):
     l = []
@@ -29,6 +31,7 @@ def compare_lists(l1,l2):
     return l
 
 
+## Measures the performances of a certain approach with the selected model
 
 def benchmark(clf,Approach=1,vect_type="hash"):
     print('_' * 80)
@@ -60,6 +63,10 @@ def benchmark(clf,Approach=1,vect_type="hash"):
     clf_descr = str(clf).split('(')[0]
     return clf_descr, score, train_time, test_time
 
+
+## Generates the output on a .txt file of the test on blind-dataset by using
+## two approaches with the selected models
+
 def output_to_file(clf1=None,v_type="hash",clf2=None,output=True,diff=True):
     
     print()
@@ -69,9 +76,9 @@ def output_to_file(clf1=None,v_type="hash",clf2=None,output=True,diff=True):
     print()
 
     if clf1 is None:
-        clf_trained1,_,vect = fa.train_and_test_model(vect_type=v_type)
+        clf_trained1,_,vect = fa.train_and_test_model(vect_type=v_type,verbose=True)
     else:
-        clf_trained1,_,vect = fa.train_and_test_model(clf1,vect_type=v_type)
+        clf_trained1,_,vect = fa.train_and_test_model(clf1,vect_type=v_type,verbose=True)
     print()
     print("##################################")
     print("######## Second Approach  ########")
@@ -79,13 +86,15 @@ def output_to_file(clf1=None,v_type="hash",clf2=None,output=True,diff=True):
     print()
 
     if clf2 is None:
-        clf_trained2,_ = sa.train_and_test_model()
+        clf_trained2,_ = sa.train_and_test_model(verbose=True)
     else:
-        clf_trained2,_ = sa.train_and_test_model(clf2)
+        clf_trained2,_ = sa.train_and_test_model(clf2,verbose=True)
     y1=fa.evaluate_mystery_set(clf_trained1,vect=vect)
     y2=sa.evaluate_mystery_set(clf_trained2)
     if diff:
+        assert len(y1) == len(y2)
         diff = compare_lists(y1,y2)
+        print("Over "+str(len(y1))+" occurrences:")
         print("Number     of Differences " + str(len(diff)))
         perc = (len(diff)/len(y1)) * 100
         print("Percentage of Differences %0.3f%%" % perc )
@@ -100,16 +109,16 @@ def output_to_file(clf1=None,v_type="hash",clf2=None,output=True,diff=True):
             f.write(element+'\n')
         f.close()
 
+## Measures the performances of a certain approach with different models
+
 def test_approach(Appr=1,vect_t="none"):
     results = []
     for clf, name in (
             (RidgeClassifier(tol=1e-2, solver="auto"), "Ridge Classifier"),
-            (Perceptron(max_iter=50), "Perceptron"),
             (PassiveAggressiveClassifier(max_iter=50),
             "Passive-Aggressive"),
             (KNeighborsClassifier(n_neighbors=10), "kNN"),
             (RandomForestClassifier(), "Random forest"),
-            (SGDClassifier(),"SGDC Classifier"),
             (LinearSVC(),"Linear SVC"),
             (DecisionTreeClassifier(),"Desition Tree"),
             (MultinomialNB(alpha=.01),"MultinomialNB"),
@@ -127,6 +136,8 @@ def test_approach(Appr=1,vect_t="none"):
     print('=' * 80)
     indices = np.arange(len(results))
     return results,indices
+
+## Plot the results of the benchmark
 
 def plot_results(results,indices,title=None):
     results = [[x[i] for x in results] for i in range(4)]
@@ -162,6 +173,8 @@ def best_in_results(results):
             clf  = clf_descr
     return max_,clf 
 
+#output_to_file(clf1=PassiveAggressiveClassifier(),v_type="tfid",clf2=RandomForestClassifier())
+
 
 results1h,indices1h=test_approach(Appr=1,vect_t="hash")
 max_1h,clf1h=best_in_results(results1h)
@@ -177,6 +190,7 @@ results2,indices2=test_approach(Appr=2,vect_t="none")
 max_2,clf2=best_in_results(results2)
 
 print("Best in categories:")
+print()
 print(max_1h,clf1h)
 print(max_1c,clf1c)
 print(max_1r,clf1r)
@@ -188,3 +202,8 @@ plot_results(results1c,indices1c,title="1st Approach with Count Vectorizer")
 plot_results(results1r,indices1r,title="1st Approach with Tfid Vectorizer")
 
 plot_results(results2,indices2,title="2nd Approach")
+#Best in categories:
+#0.9846762234305487 PassiveAggressiveClassifier
+#0.9817103311913 PassiveAggressiveClassifier
+#0.9831932773109243 PassiveAggressiveClassifier
+#0.9688581314878892 RandomForestClassifier
